@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>HYPE SCAN — YouTube盛り上がり分析</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg: #f5f4f0;
+  --bg2: #edecea;
+  --surface: #ffffff;
+  --surface2: #f0eeeb;
+  --border: #e0ddd8;
+  --border2: #ccc9c3;
+  --accent: #e8441a;
+  --accent2: #f5a623;
+  --accent3: #1a7ee8;
+  --accent-green: #18a058;
+  --text: #1c1b18;
+  --text-2: #5c5a54;
+  --text-muted: #9c9a94;
+  --shadow: rgba(28,27,24,0.08);
+  --shadow-md: rgba(28,27,24,0.14);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── HEADER ─── */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.header-inner {
+  max-width: 1260px; margin: 0 auto;
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 16px;
+  height: 64px;
+}
+.logo-mark {
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+}
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+.logo-text span { color: var(--accent); }
+.logo-tagline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.server-badge {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 13px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  transition: all 0.3s;
+}
+.server-badge.online { background: #edf7f1; border-color: #b2e4c8; color: var(--accent-green); }
+.server-badge.offline { background: #fef2ef; border-color: #f7c5ba; color: var(--accent); }
+.rate-badge {
+  display: flex; align-items: center;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 13px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  color: var(--text-2);
+}
+.rate-badge.warn { background: #fff5e6; border-color: #f5d28c; color: var(--accent2); }
+.rate-badge.danger { background: #fff3f1; border-color: #f9cfc6; color: var(--accent); }
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text-muted); transition: background 0.3s;
+}
+.status-dot.online { background: var(--accent-green); box-shadow: 0 0 0 3px rgba(24,160,88,0.2); animation: pulse-dot 2s infinite; }
+.status-dot.offline { background: var(--accent); }
+@keyframes pulse-dot { 0%,100%{box-shadow:0 0 0 3px rgba(24,160,88,0.2)} 50%{box-shadow:0 0 0 6px rgba(24,160,88,0.05)} }
+
+/* ─── LAYOUT ─── */
+.container { max-width: 1260px; margin: 0 auto; padding: 0 24px 60px; }
+
+/* ─── INPUT CARD ─── */
+.input-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin: 28px 0 20px;
+  box-shadow: 0 2px 16px var(--shadow);
+}
+.input-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.url-row { display: flex; gap: 10px; }
+.url-input {
+  flex: 1;
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  padding: 13px 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.url-input::placeholder { color: var(--text-muted); }
+.url-input:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 4px rgba(232,68,26,0.1);
+}
+.btn-analyze {
+  background: var(--accent);
+  border: none; border-radius: var(--radius-sm);
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem; letter-spacing: 1.5px;
+  padding: 13px 28px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.btn-analyze:hover { background: #d43516; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(232,68,26,0.3); }
+.btn-analyze:active { transform: translateY(0); }
+.btn-analyze:disabled { opacity:0.45; cursor:not-allowed; transform:none; box-shadow:none; }
+
+.options-row {
+  display: flex; gap: 14px; margin-top: 14px; flex-wrap: wrap; align-items: center;
+}
+.opt-group { display: flex; align-items: center; gap: 7px; }
+.opt-label {
+  font-size: 0.72rem; color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+select {
+  background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: 6px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  padding: 6px 10px; outline: none; cursor: pointer;
+  transition: border-color 0.2s;
+}
+select:focus { border-color: var(--accent3); }
+
+/* ─── SETUP GUIDE ─── */
+.setup-guide {
+  background: #fffbf5;
+  border: 1px solid #f5e4c8;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+.setup-guide-title {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 0.85rem; letter-spacing: 1px;
+  color: var(--accent2); margin-bottom: 14px;
+}
+.steps { display: flex; flex-direction: column; gap: 9px; }
+.step { display: flex; align-items: flex-start; gap: 11px; font-size: 0.82rem; line-height: 1.6; }
+.step-n {
+  background: var(--accent2); color: #fff;
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 0.7rem; width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+}
+.step code {
+  background: #fff; border: 1px solid #e8dac8; border-radius: 4px;
+  padding: 1px 6px; font-family: 'JetBrains Mono', monospace;
+  font-size: 0.76rem; color: #b8540a;
+}
+
+/* ─── OFFLINE WARN ─── */
+.offline-warn {
+  background: #fff5f3; border: 1px solid #f9cfc6;
+  border-radius: var(--radius-sm); padding: 14px 18px;
+  margin-bottom: 16px; font-size: 0.83rem;
+  line-height: 1.65; color: #c5350f; display: none;
+}
+.offline-warn.show { display: block; }
+
+/* ─── LOADING ─── */
+.loading-wrap {
+  display: none; flex-direction: column; align-items: center;
+  gap: 18px; padding: 56px 0;
+}
+.loading-wrap.active { display: flex; }
+.spinner {
+  width: 44px; height: 44px;
+  border: 3px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  color: var(--text-2); letter-spacing: 1px;
+}
+.progress-track {
+  width: 300px; height: 4px; background: var(--border);
+  border-radius: 2px; overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px; width: 0%;
+  transition: width 0.35s ease;
+}
+
+/* ─── LIVE CHAT PANEL (comment panel modes) ─── */
+/* live-chat mode: stream view / search mode: full virtual list */
+.panel-mode-tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: #fafaf8;
+}
+.tab-btn {
+  flex: 1; padding: 9px 0;
+  background: transparent; border: none; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+  color: var(--text-muted); border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn.active { color: var(--accent3); border-bottom-color: var(--accent3); }
+
+/* LIVE CHAT STREAM */
+.live-chat-wrap {
+  position: relative; height: 400px; overflow: hidden;
+}
+.live-chat-body {
+  height: 100%; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  display: flex; flex-direction: column;
+  padding-bottom: 4px;
+}
+.lc-item {
+  display: flex; gap: 9px; padding: 7px 16px;
+  border-bottom: 1px solid var(--bg2);
+  animation: lc-pop 0.25s ease;
+  flex-shrink: 0;
+}
+@keyframes lc-pop {
+  from { opacity:0; transform: translateY(6px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.lc-time {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+  color: var(--accent3); white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+}
+.lc-body { flex: 1; min-width: 0; }
+.lc-author { font-size: 0.66rem; color: var(--text-muted); }
+.lc-msg { font-size: 0.8rem; line-height: 1.45; color: var(--text); word-break: break-all; }
+.lc-paid { font-size: 0.62rem; color: var(--accent2); font-family: 'JetBrains Mono', monospace; }
+
+.live-chat-paused {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  background: rgba(28,27,24,0.78); color: #fff;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  padding: 6px 16px; border-radius: 14px;
+  cursor: pointer; pointer-events: auto;
+  opacity: 0; transition: opacity 0.2s;
+  white-space: nowrap;
+  user-select: none;
+}
+.live-chat-paused:hover { background: rgba(28,27,24,0.92); }
+.live-chat-paused.show { opacity: 1; }
+
+.live-chat-status {
+  padding: 6px 16px 8px;
+  display: flex; align-items: center; gap: 8px;
+  border-top: 1px solid var(--border);
+  background: #fafaf8;
+}
+.lc-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 0 3px rgba(24,160,88,0.2);
+  animation: pulse-dot 2s infinite;
+  flex-shrink: 0;
+}
+.lc-dot.paused { background: var(--text-muted); box-shadow: none; animation: none; }
+.lc-status-text {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.63rem;
+  color: var(--text-muted); flex: 1;
+}
+.lc-shown-count {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.63rem;
+  color: var(--text-muted);
+}
+
+/* ─── ERROR ─── */
+.error-box {
+  display: none;
+  background: #fff3f1; border: 1px solid #f9cfc6;
+  border-radius: var(--radius-sm); padding: 14px 18px;
+  margin: 12px 0; font-size: 0.84rem; color: #c5350f; line-height: 1.65;
+}
+.error-box.active { display: block; }
+
+/* ─── RESULTS ─── */
+#results { display: none; }
+
+.video-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 24px 0 20px;
+  box-shadow: 0 2px 16px var(--shadow);
+}
+.video-info-bar {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  background: #fafaf8;
+}
+.yt-icon { color: var(--accent); font-size: 1.1rem; flex-shrink: 0; }
+.video-title {
+  font-weight: 700; font-size: 0.92rem; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.video-meta {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+  color: var(--text-muted); white-space: nowrap;
+}
+
+.player-wrap { position: relative; width: 100%; padding-top: 56.25%; background: #111; }
+.player-wrap iframe,
+.player-wrap #ytPlayer { position: absolute; top:0; left:0; width:100%; height:100%; border:none; }
+.player-wrap #ytPlayer iframe { position: absolute; top:0; left:0; width:100%; height:100%; border:none; }
+
+/* ─── GRAPH ─── */
+.graph-section {
+  padding: 22px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.graph-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
+}
+.graph-title-group {}
+.graph-label {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 1.05rem; letter-spacing: 2px;
+  color: var(--accent); text-transform: uppercase;
+}
+.graph-sublabel {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+  color: var(--text-muted); margin-top: 2px;
+}
+.stat-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.stat-chip {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 12px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.63rem;
+  color: var(--text-2);
+}
+.stat-chip b { color: var(--accent); }
+
+/* ── WORD FILTER ── */
+.word-filter-bar {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px; flex-wrap: wrap;
+}
+.word-filter-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+  color: var(--text-muted); white-space: nowrap;
+}
+.word-filter-input {
+  flex: 1; min-width: 160px; max-width: 260px;
+  background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: 6px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+  padding: 6px 11px; outline: none;
+  transition: border-color 0.2s;
+}
+.word-filter-input:focus { border-color: var(--accent2); }
+.word-filter-input::placeholder { color: var(--text-muted); }
+.btn-filter {
+  background: var(--accent2); color: #fff;
+  border: none; border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+  font-weight: 600; padding: 6px 14px; cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-filter:hover { background: #e09318; transform: translateY(-1px); }
+.btn-filter-clear {
+  background: transparent; color: var(--text-muted);
+  border: 1.5px solid var(--border); border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+  padding: 5px 10px; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+}
+.btn-filter-clear:hover { border-color: var(--accent); color: var(--accent); }
+.filter-active-badge {
+  background: #fff5e6; border: 1px solid #f5d28c;
+  border-radius: 10px; padding: 2px 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+  color: var(--accent2); display: none; align-items: center; gap: 5px;
+}
+.filter-active-badge.show { display: flex; }
+
+.graph-wrapper { position: relative; height: 150px; cursor: crosshair; }
+canvas#hypeChart { width:100%; height:100%; border-radius: 6px; }
+.graph-cursor {
+  position: absolute; top:0; bottom:0; width: 2px;
+  background: var(--accent); pointer-events: none; display: none;
+  box-shadow: 0 0 8px rgba(232,68,26,0.4);
+}
+.graph-tooltip {
+  position: absolute; top: -38px; transform: translateX(-50%);
+  background: var(--text); border-radius: 6px;
+  padding: 4px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.63rem;
+  color: #fff; white-space: nowrap; pointer-events: none;
+}
+.graph-timeline {
+  display: flex; justify-content: space-between; margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.59rem; color: var(--text-muted);
+}
+
+/* ─── BOTTOM GRID ─── */
+.bottom-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+  margin: 0 0 40px;
+}
+@media(max-width:768px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+.panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.panel-header {
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: #fafaf8;
+}
+.panel-title {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 0.88rem; letter-spacing: 1px;
+}
+.panel-title.red { color: var(--accent); }
+.panel-title.blue { color: var(--accent3); }
+.panel-count {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* ─── RANKING ─── */
+.rank-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 18px; border-bottom: 1px solid var(--bg2);
+  cursor: pointer; transition: background 0.12s;
+}
+.rank-item:hover { background: var(--bg2); }
+.rank-item:last-child { border-bottom: none; }
+.rank-num {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 1.15rem; width: 30px; text-align: center; flex-shrink: 0;
+}
+.rank-num.gold   { color: #f5a623; }
+.rank-num.silver { color: #9ba0aa; }
+.rank-num.bronze { color: #b8804a; }
+.rank-num.other  { color: var(--text-muted); }
+.rank-info { flex: 1; min-width: 0; }
+.rank-time { font-family: 'JetBrains Mono', monospace; font-size: 0.73rem; color: var(--accent2); }
+.rank-bar-row { display: flex; align-items: center; gap: 7px; margin-top: 4px; }
+.rank-bar { flex: 1; height: 4px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
+.rank-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; }
+.rank-val { font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; }
+.btn-jump {
+  background: transparent; border: 1.5px solid var(--accent); border-radius: 6px;
+  color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 0.62rem;
+  padding: 4px 9px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.btn-jump:hover { background: var(--accent); color: #fff; }
+
+/* ─── COMMENT PANEL ─── */
+.search-bar { padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.search-input {
+  width: 100%; background: var(--bg2); border: 1.5px solid var(--border);
+  border-radius: 6px; color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif; font-size: 0.83rem;
+  padding: 8px 12px; outline: none; transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--accent3); }
+.search-input::placeholder { color: var(--text-muted); }
+
+/* ─── VIRTUAL SCROLL ─── */
+.comment-panel-body {
+  position: relative; overflow-y: auto; height: 400px;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.virtual-spacer-top, .virtual-spacer-bottom { width: 100%; pointer-events: none; flex-shrink: 0; }
+#vRows { position: relative; will-change: transform; }
+.comment-item {
+  display: flex; gap: 10px; padding: 9px 18px;
+  border-bottom: 1px solid var(--bg2);
+  cursor: pointer; transition: background 0.12s;
+  align-items: flex-start;
+}
+.comment-item:hover { background: var(--bg2); }
+.comment-time {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.63rem;
+  color: var(--accent3); white-space: nowrap; margin-top: 2px; flex-shrink: 0; min-width: 46px;
+}
+.comment-text {
+  font-size: 0.81rem; line-height: 1.5; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.comment-author { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+.comment-paid { font-size: 0.63rem; color: var(--accent2); font-family: 'JetBrains Mono', monospace; }
+.highlight { background: rgba(232,68,26,0.12); border-radius: 2px; padding: 0 2px; color: var(--accent); }
+.empty-state {
+  padding: 40px 20px; text-align: center;
+  color: var(--text-muted); font-size: 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+}
+</style>
+</head>
+<body>
+
+<!-- ─── HEADER ─── -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="logo-mark">
+      <div class="logo-icon">🔥</div>
+      <div>
+        <div class="logo-text">HYPE<span>SCAN</span></div>
+        <div class="logo-tagline">Live Archive Analyzer</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="rate-badge" id="rateBadge" style="display:none;">
+        <span id="rateText">—</span>
+      </div>
+      <div class="server-badge" id="serverBadge">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusLabel">確認中...</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- SETUP GUIDE (ローカル環境のみ表示) -->
+  <div class="setup-guide" id="setupGuide" style="margin-top:28px;">
+    <div class="setup-guide-title">🚀 セットアップ手順</div>
+    <div class="steps">
+      <div class="step"><div class="step-n">1</div><div><code>server.py</code> と <code>index.html</code> を同じフォルダに置く</div></div>
+      <div class="step"><div class="step-n">2</div><div>依存パッケージをインストール：<code>pip install yt-dlp flask flask-cors</code></div></div>
+      <div class="step"><div class="step-n">3</div><div>サーバーを起動：<code>python server.py</code></div></div>
+      <div class="step"><div class="step-n">4</div><div>右上が <strong style="color:var(--accent-green)">● ONLINE</strong> になったら動画URLを入力してANALYZE</div></div>
+    </div>
+  </div>
+
+  <!-- OFFLINE WARNING -->
+  <div class="offline-warn" id="offlineWarn">
+    ⚠️ <strong>サーバーがオフライン</strong>です。<code>python server.py</code> を実行してからページをリロードしてください。デモモードでUIのテストが可能です。
+  </div>
+
+  <!-- INPUT CARD -->
+  <div class="input-card">
+    <div class="input-card-title">▶ 動画URLを入力</div>
+    <div class="url-row">
+      <input type="text" class="url-input" id="urlInput"
+             placeholder="https://www.youtube.com/live/XXXXXXXXXXX" />
+      <button class="btn-analyze" id="btnAnalyze" onclick="startAnalysis()">ANALYZE</button>
+    </div>
+    <div class="options-row">
+      <div class="opt-group">
+        <span class="opt-label">時間区切り:</span>
+        <select id="intervalSelect">
+          <option value="5">5秒</option>
+          <option value="10" selected>10秒</option>
+          <option value="30">30秒</option>
+          <option value="60">60秒</option>
+        </select>
+      </div>
+      <div class="opt-group">
+        <span class="opt-label">スムージング:</span>
+        <select id="smoothSelect">
+          <option value="1">なし</option>
+          <option value="3" selected>弱</option>
+          <option value="7">中</option>
+          <option value="15">強</option>
+        </select>
+      </div>
+      <div class="opt-group">
+        <span class="opt-label">モード:</span>
+        <select id="modeSelect">
+          <option value="server">サーバー経由（実データ）</option>
+          <option value="demo">デモデータ（テスト用）</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-wrap" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-label" id="loadingText">チャットデータを取得中...</div>
+    <div class="progress-track"><div class="progress-bar" id="loadingBar"></div></div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- RESULTS -->
+  <div id="results">
+    <div class="video-card">
+      <div class="video-info-bar">
+        <div class="yt-icon">▶</div>
+        <div class="video-title" id="videoTitle">—</div>
+        <div class="video-meta" id="videoMeta">—</div>
+      </div>
+      <div class="player-wrap">
+        <div id="ytPlayer"></div>
+      </div>
+
+      <!-- GRAPH -->
+      <div class="graph-section">
+        <div class="graph-top">
+          <div class="graph-title-group">
+            <div class="graph-label">HYPE GRAPH</div>
+            <div class="graph-sublabel">コメント頻度 × 時間</div>
+          </div>
+          <div class="stat-chips">
+            <div class="stat-chip">総コメント: <b id="statTotal">—</b></div>
+            <div class="stat-chip">ピーク: <b id="statPeak">—</b></div>
+            <div class="stat-chip">平均: <b id="statAvg">—</b></div>
+          </div>
+        </div>
+
+        <!-- WORD FILTER -->
+        <div class="word-filter-bar">
+          <span class="word-filter-label">🔍 グラフフィルター:</span>
+          <input type="text" class="word-filter-input" id="wordFilterInput"
+                 placeholder="ワードを入力してグラフ化..." />
+          <button class="btn-filter" onclick="applyWordFilter()">適用</button>
+          <button class="btn-filter-clear" onclick="clearWordFilter()">クリア</button>
+          <div class="filter-active-badge" id="filterBadge">
+            <span>🏷</span>
+            <span id="filterBadgeText"></span>
+          </div>
+        </div>
+
+        <div class="graph-wrapper" id="graphWrapper">
+          <canvas id="hypeChart"></canvas>
+          <div class="graph-cursor" id="graphCursor">
+            <div class="graph-tooltip" id="graphTooltip"></div>
+          </div>
+        </div>
+        <div class="graph-timeline" id="graphTimeline"></div>
+      </div>
+    </div>
+
+    <!-- BOTTOM GRID -->
+    <div class="bottom-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title red">🔥 盛り上がりランキング TOP10</div>
+          <div class="panel-count" id="rankCount">—</div>
+        </div>
+        <div style="max-height:400px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;" id="rankingList"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title blue">💬 コメント</div>
+          <div class="panel-count" id="searchCount">—</div>
+        </div>
+        <!-- タブ切り替え -->
+        <div class="panel-mode-tabs">
+          <button class="tab-btn active" id="tabLive" onclick="switchTab('live')">▶ LIVE REPLAY</button>
+          <button class="tab-btn" id="tabSearch" onclick="switchTab('search')">🔍 検索</button>
+        </div>
+
+        <!-- LIVE CHAT MODE -->
+        <div id="liveChatPane">
+          <div class="live-chat-wrap">
+            <div class="live-chat-body" id="liveChatBody"></div>
+            <div class="live-chat-paused" id="lcPausedBadge" onclick="lcResumeScroll()">⏸ 一時停止中 — タップで再開</div>
+          </div>
+          <div class="live-chat-status">
+            <div class="lc-dot" id="lcDot"></div>
+            <div class="lc-status-text" id="lcStatusText">再生すると流れます</div>
+            <div class="lc-shown-count" id="lcShownCount">0件表示</div>
+          </div>
+        </div>
+
+        <!-- SEARCH MODE -->
+        <div id="searchPane" style="display:none;">
+          <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput"
+                   placeholder="キーワードで絞り込み..." oninput="onSearchInput()" />
+          </div>
+          <div class="comment-panel-body" id="commentPanelBody">
+            <div class="virtual-spacer-top" id="vSpacerTop"></div>
+            <div id="vRows"></div>
+            <div class="virtual-spacer-bottom" id="vSpacerBottom"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /results -->
+
+</div><!-- /container -->
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+// ローカル(localhost)なら5000番、本番(Render等)なら同一オリジン
+const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:5000'
+  : '';
+const ROW_H = 58; // approximate height of each comment row (px)
+const RENDER_BUFFER = 5; // extra rows above/below viewport
+
+// ============================================================
+// STATE
+// ============================================================
+let allComments = [];
+let filteredComments = [];
+let smoothedScores = [];
+let filteredScores = [];
+let videoDuration = 0;
+let currentWordFilter = '';
+
+// ── LIVE CHAT STATE ──
+let lcNextIdx      = 0;       // 次に流す allComments のインデックス
+let lcShownCount   = 0;       // 表示済み件数
+let lcAutoScroll   = true;    // 最下部追従フラグ
+let lcTimerId      = null;    // setInterval ID
+let lcCurrentTab   = 'live';  // 'live' | 'search'
+const LC_MAX_ROWS  = 200;     // DOM に保持する最大行数
+
+// ============================================================
+// RATE BADGE
+// ============================================================
+function updateRateBadge(remaining, limit) {
+  const badge = document.getElementById('rateBadge');
+  const text  = document.getElementById('rateText');
+  if (limit == null) { badge.style.display = 'none'; return; }
+  badge.style.display = 'flex';
+  text.textContent = `本日あと${remaining}回`;
+  badge.className = 'rate-badge' + (remaining <= 0 ? ' danger' : remaining <= 2 ? ' warn' : '');
+}
+
+async function fetchRateStatus() {
+  try {
+    const r = await fetch(API_BASE + '/api/rate_status', { cache: 'no-store' });
+    if (r.ok) {
+      const d = await r.json();
+      updateRateBadge(d.remaining, d.limit);
+    }
+  } catch {}
+}
+
+// ============================================================
+// SERVER CHECK
+// ============================================================
+async function checkServer() {
+  // 本番環境（Render等）ではサーバーステータス表示不要
+  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    setServerStatus(true);
+    document.getElementById('serverBadge').style.display = 'none';
+    document.getElementById('offlineWarn').classList.remove('show');
+    return;
+  }
+  try {
+    const r = await fetch(API_BASE + "/api/health", { cache: "no-store" });
+    setServerStatus(r.ok);
+  } catch { setServerStatus(false); }
+}
+function setServerStatus(online) {
+  const badge = document.getElementById('serverBadge');
+  const dot   = document.getElementById('statusDot');
+  const label = document.getElementById('statusLabel');
+  const warn  = document.getElementById('offlineWarn');
+  badge.className = 'server-badge ' + (online ? 'online' : 'offline');
+  dot.className   = 'status-dot ' + (online ? 'online' : 'offline');
+  label.textContent = online ? 'SERVER ONLINE' : 'SERVER OFFLINE';
+  warn.classList.toggle('show', !online);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function formatTime(sec) {
+  const s = Math.floor(sec);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = s % 60;
+  if (h > 0) return h + ':' + String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+  return m + ':' + String(ss).padStart(2,'0');
+}
+function setProgress(pct, txt) {
+  document.getElementById('loadingBar').style.width = pct + '%';
+  if (txt) document.getElementById('loadingText').textContent = txt;
+}
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+// ============================================================
+// LIVE CHAT ENGINE
+// ============================================================
+function switchTab(tab) {
+  lcCurrentTab = tab;
+  document.getElementById('tabLive').classList.toggle('active', tab === 'live');
+  document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
+  document.getElementById('liveChatPane').style.display  = tab === 'live'   ? '' : 'none';
+  document.getElementById('searchPane').style.display    = tab === 'search' ? '' : 'none';
+}
+
+function startLiveChat() {
+  lcNextIdx    = 0;
+  lcShownCount = 0;
+  lcAutoScroll = true;
+  document.getElementById('liveChatBody').innerHTML = '';
+
+  const body = document.getElementById('liveChatBody');
+
+  // ユーザーがスクロールを上に戻したら自動追従を停止
+  body.addEventListener('scroll', () => {
+    const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 40;
+    lcAutoScroll = atBottom;
+    document.getElementById('lcPausedBadge').classList.toggle('show', !atBottom);
+    document.getElementById('lcDot').className = 'lc-dot' + (atBottom ? '' : ' paused');
+  });
+
+  // 250ms ごとに現在再生時刻を取得してコメントを追加
+  if (lcTimerId) clearInterval(lcTimerId);
+  lcTimerId = setInterval(lcTick, 250);
+
+  setLcStatus('再生すると流れます', 0);
+}
+
+function stopLiveChat() {
+  if (lcTimerId) { clearInterval(lcTimerId); lcTimerId = null; }
+}
+
+// ── YouTube Player (シンプル iframe 方式) ──
+let ytCurrentSec = 0;
+let ytTimerPoller = null;
+
+// YouTube IFrame postMessage で currentTime を受け取る
+let _prevYtSec = 0; // 前回の再生位置（シーク検出用）
+window.addEventListener('message', function(e) {
+  if (!e.data) return;
+  try {
+    const d = (typeof e.data === 'string') ? JSON.parse(e.data) : e.data;
+    if (d.event === 'infoDelivery' && d.info && typeof d.info.currentTime === 'number') {
+      const t = d.info.currentTime;
+      // 前回から1秒以上逆行 or 3秒以上ジャンプ → シークとみなしてチャットリセット
+      if (t < _prevYtSec - 1 || t > _prevYtSec + 3) {
+        lcNextIdx    = findNextIdx(t * 1000);
+        lcShownCount = lcNextIdx;
+        const body = document.getElementById('liveChatBody');
+        if (body) body.innerHTML = '';
+      }
+      ytCurrentSec = t;
+      _prevYtSec   = t;
+    }
+  } catch {}
+});
+
+function initPlayer(vid) {
+  ytCurrentSec = 0;
+  if (ytTimerPoller) { clearInterval(ytTimerPoller); ytTimerPoller = null; }
+
+  // div を iframe に置き換え（または src を更新）
+  const wrap = document.querySelector('.player-wrap');
+  let iframe = document.getElementById('ytPlayer');
+  if (!iframe || iframe.tagName !== 'IFRAME') {
+    if (iframe) iframe.remove();
+    iframe = document.createElement('iframe');
+    iframe.id = 'ytPlayer';
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('allow', 'autoplay');
+    iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;';
+    wrap.appendChild(iframe);
+  }
+  iframe.src = 'https://www.youtube.com/embed/' + vid
+    + '?enablejsapi=1&autoplay=0';
+
+  // iframe がロードされたら listening 登録して currentTime を定期取得
+  iframe.onload = function() {
+    ytTimerPoller = setInterval(function() {
+      try {
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ event: 'listening', id: 1 }), '*'
+        );
+      } catch {}
+    }, 250);
+  };
+}
+
+function seekPlayer(sec) {
+  const iframe = document.getElementById('ytPlayer');
+  if (!iframe) return;
+  try {
+    iframe.contentWindow.postMessage(
+      JSON.stringify({ event:'command', func:'seekTo', args:[Math.floor(sec), true] }), '*'
+    );
+    iframe.contentWindow.postMessage(
+      JSON.stringify({ event:'command', func:'playVideo', args:[] }), '*'
+    );
+  } catch {}
+  // ライブチャットをシーク先にリセット
+  ytCurrentSec = sec;
+  lcNextIdx    = findNextIdx(sec * 1000);
+  lcShownCount = lcNextIdx; // 表示済み件数もシーク先に合わせる
+  document.getElementById('liveChatBody').innerHTML = ''; // 表示行をクリア
+  lcAutoScroll = true;
+  document.getElementById('lcPausedBadge').classList.remove('show');
+  document.getElementById('lcDot').className = 'lc-dot';
+}
+
+function lcTick() {
+  // allComments は offsetMs 昇順ソート済み
+  const thresholdMs = ytCurrentSec * 1000 + 300;
+  const body = document.getElementById('liveChatBody');
+  let added = 0;
+
+  while (lcNextIdx < allComments.length &&
+         allComments[lcNextIdx].offsetMs <= thresholdMs) {
+    const c = allComments[lcNextIdx];
+    lcNextIdx++;
+    lcShownCount++;
+    added++;
+
+    const el = document.createElement('div');
+    el.className = 'lc-item';
+    el.innerHTML =
+      '<div class="lc-time">' + formatTime(c.offsetMs / 1000) + '</div>' +
+      '<div class="lc-body">' +
+        '<span class="lc-author">' + esc(c.author || '') + '</span> ' +
+        '<span class="lc-msg">' + esc(c.message) + '</span>' +
+        (c.isPaid ? ' <span class="lc-paid">💰' + esc(c.amount) + '</span>' : '') +
+      '</div>';
+    const sec = c.offsetMs / 1000;
+    el.addEventListener('click', () => seekPlayer(sec));
+    body.appendChild(el);
+  }
+
+  // 古い行を間引いて DOM 肥大化を防ぐ
+  while (body.children.length > LC_MAX_ROWS) {
+    body.removeChild(body.firstChild);
+  }
+
+  // 自動スクロール
+  if (added > 0 && lcAutoScroll) {
+    body.scrollTop = body.scrollHeight;
+  }
+
+  // ステータス更新
+  setLcStatus(
+    ytCurrentSec > 0 ? formatTime(ytCurrentSec) + ' 再生中' : '再生すると流れます',
+    lcShownCount
+  );
+}
+
+function setLcStatus(text, count) {
+  document.getElementById('lcStatusText').textContent = text;
+  document.getElementById('lcShownCount').textContent = count.toLocaleString() + '件表示';
+}
+
+function lcResumeScroll() {
+  const body = document.getElementById('liveChatBody');
+  body.scrollTop = body.scrollHeight;
+  lcAutoScroll = true;
+  document.getElementById('lcPausedBadge').classList.remove('show');
+  document.getElementById('lcDot').className = 'lc-dot';
+}
+
+// ============================================================
+// DEMO DATA
+// ============================================================
+function generateDemoData(duration) {
+  const events = [];
+  for (let i = 0; i < 14; i++) {
+    events.push({ t: Math.random()*duration, intensity: 0.3+Math.random()*0.7, spread: 20+Math.random()*80 });
+  }
+  const msgs = ['w','草','草草草','すごい！','やばい','え？','笑笑','最高','えぇ！？','wwww','神','好き','来た！','やった！','まじか','おお！'];
+  const comments = [];
+  for (let t = 0; t < duration; t += 0.5 + Math.random()*2) {
+    let rate = 0.6;
+    for (const ev of events) {
+      const d = t - ev.t;
+      rate += ev.intensity * 6 * Math.exp(-d*d/(2*ev.spread*ev.spread));
+    }
+    if (Math.random() < rate * 0.4) {
+      comments.push({
+        offsetMs: Math.floor(t*1000),
+        message: msgs[Math.floor(Math.random()*msgs.length)],
+        author: 'ユーザー' + Math.floor(Math.random()*9999),
+        isPaid: false, amount: ''
+      });
+    }
+  }
+  return comments;
+}
+
+// ============================================================
+// ANALYSIS
+// ============================================================
+function analyzeBuckets(comments, duration, interval) {
+  const n = Math.ceil(duration / interval);
+  const counts = new Array(n).fill(0);
+  for (const c of comments) {
+    const idx = Math.min(Math.floor((c.offsetMs/1000)/interval), n-1);
+    if (idx >= 0) counts[idx]++;
+  }
+  const nonZero = counts.filter(v => v > 0);
+  const avg = nonZero.length ? nonZero.reduce((a,b)=>a+b,0)/nonZero.length : 1;
+  const scores = counts.map(c => c / Math.max(avg, 0.1));
+  return { scores, avg };
+}
+
+function gaussianSmooth(data, w) {
+  if (w <= 1) return data.slice();
+  const half = Math.floor(w/2), sig = half/2;
+  let kernel = [], sum = 0;
+  for (let i = 0; i < 2*half+1; i++) {
+    const x = i-half, v = Math.exp(-(x*x)/(2*sig*sig));
+    kernel.push(v); sum += v;
+  }
+  kernel = kernel.map(v => v/sum);
+  return data.map((_, idx) => {
+    let val = 0;
+    for (let k = 0; k < kernel.length; k++) {
+      const di = idx-half+k;
+      val += (di>=0 && di<data.length ? data[di] : 0)*kernel[k];
+    }
+    return val;
+  });
+}
+
+function getTop10(scores, interval) {
+  const indexed = scores.map((s,i) => ({s,i})).sort((a,b) => b.s-a.s);
+  const top = [];
+  for (const item of indexed) {
+    const conflict = top.some(t => Math.abs(t.i-item.i) < 5);
+    if (!conflict) {
+      top.push(item);
+      if (top.length >= 10) break;
+    }
+  }
+  return top.map(item => ({ startSec: item.i*interval, endSec: (item.i+1)*interval, score: item.s }));
+}
+
+// ============================================================
+// WORD FILTER
+// ============================================================
+function applyWordFilter() {
+  const word = document.getElementById('wordFilterInput').value.trim();
+  if (!word) { clearWordFilter(); return; }
+  currentWordFilter = word;
+  const badge = document.getElementById('filterBadge');
+  document.getElementById('filterBadgeText').textContent = '"' + word + '"';
+  badge.classList.add('show');
+
+  const interval = parseInt(document.getElementById('intervalSelect').value);
+  const smoothW  = parseInt(document.getElementById('smoothSelect').value);
+  const subset = allComments.filter(c => c.message.toLowerCase().includes(word.toLowerCase()));
+  const result = analyzeBuckets(subset, videoDuration, interval);
+  filteredScores = gaussianSmooth(result.scores, smoothW);
+
+  document.getElementById('statTotal').textContent = subset.length.toLocaleString() + ' / ' + allComments.length.toLocaleString();
+  drawGraph(filteredScores, videoDuration, interval, word);
+  const top10 = getTop10(filteredScores, interval);
+  renderRanking(top10, interval);
+}
+
+function clearWordFilter() {
+  currentWordFilter = '';
+  document.getElementById('wordFilterInput').value = '';
+  document.getElementById('filterBadge').classList.remove('show');
+
+  const interval = parseInt(document.getElementById('intervalSelect').value);
+  const smoothW  = parseInt(document.getElementById('smoothSelect').value);
+  document.getElementById('statTotal').textContent = allComments.length.toLocaleString();
+  drawGraph(smoothedScores, videoDuration, interval);
+  const top10 = getTop10(smoothedScores, interval);
+  renderRanking(top10, interval);
+}
+
+// ============================================================
+// GRAPH
+// ============================================================
+function drawGraph(smoothed, duration, interval, filterWord) {
+  const canvas  = document.getElementById('hypeChart');
+  const wrapper = document.getElementById('graphWrapper');
+  const dpr = window.devicePixelRatio || 1;
+  const W = wrapper.clientWidth, H = wrapper.clientHeight;
+  if (!W || !H) return;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const pT=14, pB=4, cH=H-pT-pB;
+  const maxS = Math.max(...smoothed, 0.01);
+
+  // grid
+  ctx.strokeStyle='rgba(28,27,24,0.06)'; ctx.lineWidth=1;
+  for (let i=1;i<5;i++) {
+    const y=pT+cH*(1-i/5);
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+  // baseline
+  const baseY=pT+cH*(1-1/maxS);
+  if (baseY>pT && baseY<pT+cH) {
+    ctx.strokeStyle='rgba(232,68,26,0.2)';
+    ctx.setLineDash([4,4]); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(0,baseY); ctx.lineTo(W,baseY); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // area fill
+  const isFiltered = !!filterWord;
+  const c1 = isFiltered ? 'rgba(245,166,35,0.7)' : 'rgba(232,68,26,0.65)';
+  const c2 = isFiltered ? 'rgba(245,166,35,0.15)' : 'rgba(232,68,26,0.05)';
+  const s1 = isFiltered ? 'rgba(240,155,20,0.9)' : 'rgba(232,68,26,0.9)';
+
+  const grad = ctx.createLinearGradient(0,pT,0,pT+cH);
+  grad.addColorStop(0, c1);
+  grad.addColorStop(1, c2);
+
+  ctx.beginPath(); ctx.moveTo(0,pT+cH);
+  for (let i=0;i<smoothed.length;i++) {
+    const x=(i/(smoothed.length-1))*W;
+    const y=pT+cH*(1-smoothed[i]/maxS);
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(W,pT+cH); ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+
+  // line
+  ctx.beginPath();
+  for (let i=0;i<smoothed.length;i++) {
+    const x=(i/(smoothed.length-1))*W;
+    const y=pT+cH*(1-smoothed[i]/maxS);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle=s1; ctx.lineWidth=2; ctx.stroke();
+
+  // timeline
+  const tl = document.getElementById('graphTimeline');
+  tl.innerHTML = '';
+  for (let i=0;i<=6;i++) {
+    const sp = document.createElement('span');
+    sp.textContent = formatTime((i/6)*duration);
+    tl.appendChild(sp);
+  }
+
+  // interactions
+  const gw = document.getElementById('graphWrapper');
+  gw.onmousemove = function(e) {
+    const r=gw.getBoundingClientRect();
+    const rx=(e.clientX-r.left)/r.width;
+    const cursor=document.getElementById('graphCursor');
+    const tooltip=document.getElementById('graphTooltip');
+    cursor.style.display='block';
+    cursor.style.left=(rx*W)+'px';
+    const idx=Math.min(Math.floor(rx*smoothed.length),smoothed.length-1);
+    tooltip.textContent=formatTime(rx*duration)+'  x'+(smoothed[idx]||0).toFixed(2);
+    const tW=120, x=rx*W;
+    tooltip.style.left=(Math.min(Math.max(tW/2,x),W-tW/2)-x)+'px';
+  };
+  gw.onmouseleave=()=>{ document.getElementById('graphCursor').style.display='none'; };
+  gw.onclick=function(e) {
+    const r=gw.getBoundingClientRect();
+    seekPlayer(((e.clientX-r.left)/r.width)*duration);
+  };
+  gw.ontouchend=function(e) {
+    e.preventDefault();
+    const t=e.changedTouches[0];
+    const r=gw.getBoundingClientRect();
+    seekPlayer(((t.clientX-r.left)/r.width)*duration);
+  };
+}
+
+// seekPlayer 呼び出し時に正しい次インデックスを二分探索で求める
+function findNextIdx(thresholdMs) {
+  let lo = 0, hi = allComments.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (allComments[mid].offsetMs <= thresholdMs) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+// ============================================================
+// RANKING
+// ============================================================
+function renderRanking(top, interval) {
+  const list = document.getElementById('rankingList');
+  list.innerHTML = '';
+  const maxS = top.length ? top[0].score : 1;
+  const cls = ['gold','silver','bronze'];
+  for (let i = 0; i < top.length; i++) {
+    const item = top[i];
+    const pct = (item.score/maxS*100).toFixed(0);
+    const el = document.createElement('div');
+    el.className = 'rank-item';
+    el.innerHTML =
+      '<div class="rank-num '+(cls[i]||'other')+'">'+(i+1)+'</div>' +
+      '<div class="rank-info">' +
+        '<div class="rank-time">'+formatTime(item.startSec)+' → '+formatTime(item.endSec)+'</div>' +
+        '<div class="rank-bar-row">' +
+          '<div class="rank-bar"><div class="rank-fill" style="width:'+pct+'%"></div></div>' +
+          '<div class="rank-val">x'+item.score.toFixed(2)+'</div>' +
+        '</div>' +
+      '</div>' +
+      '<button class="btn-jump" data-sec="'+item.startSec+'">▶ JUMP</button>';
+    el.querySelector('.btn-jump').addEventListener('click', function(e) {
+      e.stopPropagation();
+      seekPlayer(parseFloat(this.getAttribute('data-sec')));
+    });
+    el.addEventListener('click', function() { seekPlayer(item.startSec); });
+    list.appendChild(el);
+  }
+  document.getElementById('rankCount').textContent = 'TOP '+top.length;
+}
+
+// ============================================================
+// VIRTUAL SCROLL (transform方式 — スクロールジャンプなし)
+// ============================================================
+let vsComments   = [];
+let vsSearchKw   = '';
+let vsRafPending = false;
+
+function initVirtualScroll(comments, kw) {
+  vsComments = comments;
+  vsSearchKw = kw || '';
+
+  const body = document.getElementById('commentPanelBody');
+  // スクロールイベントを一度リセット
+  body.onscroll = null;
+  body.scrollTop = 0;
+
+  _vsRender();
+
+  body.onscroll = () => {
+    if (!vsRafPending) {
+      vsRafPending = true;
+      requestAnimationFrame(() => { _vsRender(); vsRafPending = false; });
+    }
+  };
+  document.getElementById('searchCount').textContent = comments.length.toLocaleString() + '件';
+}
+
+function _vsRender() {
+  const body    = document.getElementById('commentPanelBody');
+  const rowsEl  = document.getElementById('vRows');
+  const spacer  = document.getElementById('vSpacerBottom');
+
+  if (!vsComments.length) {
+    rowsEl.style.transform = '';
+    rowsEl.innerHTML = '<div class="empty-state">— コメントなし —</div>';
+    spacer.style.height = '0px';
+    document.getElementById('vSpacerTop').style.height = '0px';
+    return;
+  }
+
+  const scrollTop = body.scrollTop;
+  const viewH     = body.clientHeight;
+  const totalH    = vsComments.length * ROW_H;
+
+  // 総高さをbottomスペーサーで確保（topスペーサーは使わない）
+  document.getElementById('vSpacerTop').style.height = '0px';
+  spacer.style.height = Math.max(0, totalH - viewH) + 'px';
+
+  const firstIdx = Math.max(0, Math.floor(scrollTop / ROW_H) - RENDER_BUFFER);
+  const lastIdx  = Math.min(vsComments.length - 1,
+                    Math.ceil((scrollTop + viewH) / ROW_H) + RENDER_BUFFER);
+
+  // rows を translateY で正しい位置にオフセット
+  rowsEl.style.transform = `translateY(${firstIdx * ROW_H}px)`;
+
+  const re = vsSearchKw ? new RegExp(escRe(vsSearchKw), 'gi') : null;
+  const frag = document.createDocumentFragment();
+  for (let i = firstIdx; i <= lastIdx; i++) {
+    const c = vsComments[i];
+    let msg = esc(c.message);
+    if (re) msg = msg.replace(re, m => '<span class="highlight">'+m+'</span>');
+    const el = document.createElement('div');
+    el.className = 'comment-item';
+    el.style.height = ROW_H + 'px';
+    el.innerHTML =
+      '<div class="comment-time">'+formatTime(c.offsetMs/1000)+'</div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div class="comment-text">'+msg+'</div>' +
+        '<div class="comment-author">'+esc(c.author||'')+'</div>' +
+        (c.isPaid ? '<div class="comment-paid">💰 '+esc(c.amount)+'</div>' : '') +
+      '</div>';
+    const sec = c.offsetMs/1000;
+    el.addEventListener('click', () => seekPlayer(sec));
+    frag.appendChild(el);
+  }
+  rowsEl.innerHTML = '';
+  rowsEl.appendChild(frag);
+}
+
+function onSearchInput() {
+  const kw = document.getElementById('searchInput').value.trim();
+  if (!kw) {
+    initVirtualScroll(allComments, '');
+    return;
+  }
+  const lower = kw.toLowerCase();
+  const filtered = allComments.filter(c => c.message.toLowerCase().includes(lower));
+  initVirtualScroll(filtered, kw);
+}
+
+// ============================================================
+// FINISH ANALYSIS
+// ============================================================
+function finishAnalysis(vid, title, duration, comments, interval, smoothW) {
+  allComments = comments.slice().sort((a,b) => a.offsetMs - b.offsetMs);
+  videoDuration = duration;
+
+  const result = analyzeBuckets(allComments, duration, interval);
+  smoothedScores = gaussianSmooth(result.scores, smoothW);
+  const top10 = getTop10(smoothedScores, interval);
+
+  document.getElementById('videoTitle').textContent = title;
+  document.getElementById('videoMeta').textContent = formatTime(duration) + ' / ' + allComments.length.toLocaleString() + '件';
+  document.getElementById('statTotal').textContent = allComments.length.toLocaleString();
+  document.getElementById('statPeak').textContent = 'x' + Math.max(...smoothedScores).toFixed(2);
+  document.getElementById('statAvg').textContent = result.avg.toFixed(1) + '件/区間';
+  document.getElementById('searchCount').textContent = allComments.length.toLocaleString() + '件';
+
+  initPlayer(vid);
+  setProgress(100, '完了');
+  showLoading(false);
+  document.getElementById('results').style.display = 'block';
+
+  // Reset word filter
+  currentWordFilter = '';
+  document.getElementById('wordFilterInput').value = '';
+  document.getElementById('filterBadge').classList.remove('show');
+
+  // Live chat 初期化
+  ytCurrentSec = 0;
+  switchTab('live');
+  startLiveChat();
+
+  function tryDraw(attempt) {
+    const wrapper = document.getElementById('graphWrapper');
+    if (wrapper.clientWidth > 0) {
+      drawGraph(smoothedScores, duration, interval);
+      renderRanking(top10, interval);
+      initVirtualScroll(allComments, '');
+    } else if (attempt < 20) {
+      setTimeout(() => tryDraw(attempt+1), 50);
+    }
+  }
+  setTimeout(() => tryDraw(0), 50);
+}
+
+// ============================================================
+// MAIN
+// ============================================================
+function startAnalysis() {
+  const url      = document.getElementById('urlInput').value.trim();
+  const mode     = document.getElementById('modeSelect').value;
+  const interval = parseInt(document.getElementById('intervalSelect').value);
+  const smoothW  = parseInt(document.getElementById('smoothSelect').value);
+
+  if (!url) { showError('URLを入力してください。'); return; }
+
+  hideError();
+  document.getElementById('results').style.display = 'none';
+  showLoading(true);
+  document.getElementById('btnAnalyze').disabled = true;
+
+  if (mode === 'demo') {
+    setProgress(10, 'デモデータを生成中...');
+    setTimeout(() => {
+      const duration = 7200;
+      const title = 'デモ動画 — ライブアーカイブサンプル';
+      setProgress(60, 'コメント生成中...');
+      setTimeout(() => {
+        const vid = parseVid(url) || 'dQw4w9WgXcQ';
+        const comments = generateDemoData(duration);
+        document.getElementById('btnAnalyze').disabled = false;
+        finishAnalysis(vid, title, duration, comments, interval, smoothW);
+      }, 300);
+    }, 300);
+    return;
+  }
+
+  // SSE mode
+  setProgress(5, '接続中...');
+
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  let retryCount = 0;
+  const maxRetry = isLocal ? 0 : 3; // 本番は最大3回リトライ
+
+  function connectSSE() {
+    const sse = new EventSource(API_BASE + '/api/chat/stream?url=' + encodeURIComponent(url));
+    let settled = false;
+
+    function settle(fn) { if (!settled) { settled = true; fn(); } }
+
+    sse.addEventListener('rate_info', function(e) {
+      try {
+        const d = JSON.parse(e.data);
+        updateRateBadge(d.remaining, d.limit);
+      } catch {}
+    });
+
+    sse.addEventListener('progress', function(e) {
+      try {
+        const d = JSON.parse(e.data);
+        setProgress(d.pct||0, d.msg||'処理中...');
+      } catch {}
+    });
+
+    sse.addEventListener('fail', function(e) {
+      sse.close();
+      settle(() => {
+        showLoading(false);
+        document.getElementById('btnAnalyze').disabled = false;
+        try {
+          const d = JSON.parse(e.data);
+          showError('エラー: ' + (d.error||'サーバーエラー'));
+        } catch { showError('サーバーエラーが発生しました'); }
+      });
+    });
+
+    sse.addEventListener('done', function(e) {
+      sse.close();
+      settle(() => {
+        document.getElementById('btnAnalyze').disabled = false;
+        try {
+          const data = JSON.parse(e.data);
+          if (!data.comments || data.comments.length === 0) {
+            showLoading(false);
+            showError('コメントが0件でした。');
+            return;
+          }
+          finishAnalysis(data.video_id, data.title, data.duration, data.comments, interval, smoothW);
+        } catch(ex) {
+          showLoading(false);
+          showError('データのパースに失敗: ' + ex.message);
+        }
+      });
+    });
+
+    sse.onerror = function() {
+      if (sse.readyState === EventSource.CLOSED) {
+        sse.close();
+        if (retryCount < maxRetry) {
+          retryCount++;
+          setProgress(5, `サーバー起動中... 接続を試みています (${retryCount}/${maxRetry})`);
+          setTimeout(connectSSE, 5000); // 5秒後にリトライ
+        } else {
+          settle(() => {
+            showLoading(false);
+            document.getElementById('btnAnalyze').disabled = false;
+            showError(isLocal
+              ? 'サーバーに接続できません。\npython server.py が起動しているか確認してください。'
+              : '接続に失敗しました。ページを再読み込みしてもう一度お試しください。\n（初回アクセス時はサーバー起動に1分ほどかかる場合があります）'
+            );
+          });
+        }
+      }
+    };
+  }
+
+  connectSSE();
+}
+
+function parseVid(url) {
+  const m = url.match(/(?:v=|youtu\.be\/|\/live\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function reanalyze() {
+  if (!allComments.length) return;
+  const interval = parseInt(document.getElementById('intervalSelect').value);
+  const smoothW  = parseInt(document.getElementById('smoothSelect').value);
+  const result   = analyzeBuckets(allComments, videoDuration, interval);
+  smoothedScores = gaussianSmooth(result.scores, smoothW);
+  const top10    = getTop10(smoothedScores, interval);
+  if (currentWordFilter) {
+    applyWordFilter();
+  } else {
+    drawGraph(smoothedScores, videoDuration, interval);
+    renderRanking(top10, interval);
+  }
+  document.getElementById('statPeak').textContent = 'x' + Math.max(...smoothedScores).toFixed(2);
+  document.getElementById('statAvg').textContent = analyzeBuckets(allComments, videoDuration, interval).avg.toFixed(1) + '件/区間';
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function showLoading(v) {
+  document.getElementById('loadingOverlay').classList.toggle('active', v);
+  if (v) document.getElementById('loadingBar').style.width = '0%';
+}
+function showError(msg) {
+  const b = document.getElementById('errorBox');
+  b.innerHTML = msg.replace(/\n/g,'<br>');
+  b.classList.add('active');
+}
+function hideError() { document.getElementById('errorBox').classList.remove('active'); }
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('urlInput').addEventListener('keydown', e => { if (e.key==='Enter') startAnalysis(); });
+document.getElementById('wordFilterInput').addEventListener('keydown', e => { if (e.key==='Enter') applyWordFilter(); });
+document.getElementById('intervalSelect').addEventListener('change', reanalyze);
+document.getElementById('smoothSelect').addEventListener('change', reanalyze);
+window.addEventListener('resize', () => {
+  if (smoothedScores.length) {
+    const scores = currentWordFilter ? filteredScores : smoothedScores;
+    drawGraph(scores, videoDuration, parseInt(document.getElementById('intervalSelect').value), currentWordFilter||undefined);
+  }
+});
+
+checkServer();
+setInterval(checkServer, 10000);
+fetchRateStatus();
+
+// 本番環境ではセットアップガイドとデモモード選択を非表示
+if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+  const guide = document.getElementById('setupGuide');
+  if (guide) guide.style.display = 'none';
+  // モード選択からデモを消す
+  const modeSelect = document.getElementById('modeSelect');
+  if (modeSelect) {
+    Array.from(modeSelect.options).forEach(opt => {
+      if (opt.value === 'demo') opt.remove();
+    });
+  }
+}
+</script>
+</body>
+</html>
