@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: hype-scan
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: RATE_LIMIT
+        value: "3"
+      - key: RATE_WINDOW
+        value: "86400"
